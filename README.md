@@ -5,7 +5,7 @@ v8App's repository for building v8 distributions
  
  Mac OS, Linux
  ```bash
-curl https://raw.githubusercontent.com/v8App/v8App/master/scripts/iniitial-clone.sh | bash -s
+curl https://raw.githubusercontent.com/v8App/v8Dist/master/scripts/iniitial-clone.sh | bash -s
 ```
 Windows
 ```bash
