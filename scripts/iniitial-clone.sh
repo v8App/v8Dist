@@ -6,16 +6,27 @@
 
 TOP="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
-#are we on Linux or Mac OS X
-OSX=`uname -a | grep Darwin | wc -l`
-V8_VERSION=`cat ${TOP}/v8Version`
-
 #check for git install
 git --version >> /dev/null
 if [[ $? -ne 0 ]]; then
     echo "Doesn't seem as if git is installed, as getting the version failed"
     exit 1
 fi
+
+#clone the repository
+git clone https://github.com/v8App/v8Dist.git
+if [[ $? -ne 0 ]]; then
+    echo "Failed to clone the v8Dist repo"
+    exit 1
+fi
+
+TOP=${TOP}/v8Dist
+cd ${TOP}
+
+#are we on Linux or Mac OS X
+OSX=`uname -a | grep Darwin | wc -l`
+V8_VERSION=`cat ${TOP}/v8Version`
+
 
 echo "This script will install google's depot tools and then clone the v8App in the current directory '${TOP}'."
 
@@ -47,24 +58,17 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-
-gclient config --name "v8Dist" --unmanaged https://github.com/v8App/v8Dist
+echo "Fetching v8"
+cd v8Dist
+fetch v8
 if [[ $? -ne 0 ]]; then
-    echo "Failed to generate the gclient config"
+    echo "Failed to fetch the v8 repository"
     exit 1
 fi
 
 gclient sync --with_branch_heads --with_tags
 if [[ $? -ne 0 ]]; then
     echo "Failed to sync the v8App repository"
-    exit 1
-fi
-
-echo "Syncing v8"
-cd v8Dist
-fetch v8
-if [[ $? -ne 0 ]]; then
-    echo "Failed to fetch the v8 repository"
     exit 1
 fi
 
