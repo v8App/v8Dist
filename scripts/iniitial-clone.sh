@@ -22,6 +22,10 @@ fi
 
 TOP=${TOP}/v8Dist
 cd ${TOP}
+if [[ $? -ne 0 ]]; then
+    echo "Failed tochange to ${TOP}"
+    exit 1
+fi
 
 #are we on Linux or Mac OS X
 OSX=`uname -a | grep Darwin | wc -l`
@@ -59,16 +63,9 @@ if [[ $? -ne 0 ]]; then
 fi
 
 echo "Fetching v8"
-cd v8Dist
-fetch v8
+gclient sync --gclientfile=.v8_gclient --with_branch_heads --with_tags
 if [[ $? -ne 0 ]]; then
-    echo "Failed to fetch the v8 repository"
-    exit 1
-fi
-
-gclient sync --with_branch_heads --with_tags
-if [[ $? -ne 0 ]]; then
-    echo "Failed to sync the v8App repository"
+    echo "Failed to sync the v8 repository"
     exit 1
 fi
 
