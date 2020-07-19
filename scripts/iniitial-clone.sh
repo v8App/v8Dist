@@ -8,6 +8,7 @@ TOP="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 #are we on Linux or Mac OS X
 OSX=`uname -a | grep Darwin | wc -l`
+V8_VERSION=`cat ${TOP}/v8Version`
 
 #check for git install
 git --version >> /dev/null
@@ -66,5 +67,10 @@ if [[ $? -ne 0 ]]; then
     echo "Failed to fetch the v8 repository"
     exit 1
 fi
+
+# get a specific version
+cd v8
+echo "Checking out ${V8_VERSION}"
+git checkout ${V8_VERSION}
 
 echo "/n/nYou will want to add this this path '${TOP}/depot_tools' to your PATH variable through an export or in your shell config."
