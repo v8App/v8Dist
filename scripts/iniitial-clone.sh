@@ -74,4 +74,6 @@ cd v8
 echo "Checking out ${V8_VERSION}"
 git checkout ${V8_VERSION}
 
-echo "/n/nYou will want to add this this path '${TOP}/depot_tools' to your PATH variable through an export or in your shell config."
+echo ""
+echo ""
+echo "You will want to add this this path '${TOP}/depot_tools' to your PATH variable through an export or in your shell config."

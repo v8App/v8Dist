@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+
+##
+# Asks the user for a a yes or no question
+#
+# Params
+# $1 A variable name to store the answer.
+# $2 The message to display to the user..
+
+# Returns
+# Success=0 or Fail=1
+##
+function ask_for_yes_no() {
+    if [[ "$#" -ne 2 ]]; then
+        echo "ask_for_number requires 2 parameters"
+        echo "<ret_var_name> <message>"
+        return 1
+    fi
+
+    local l_answer
+
+    echo ${2}
+    read l_answer
+    l_answer=`echo ${l_answer} | awk '{print tolower($0)}'`
+    if [[ "$l_answer" == "yes" ]] || [[ "$l_answer" == "y" ]]; then
+         l_answer=1
+    else
+         l_answer=0
+    fi
+    eval "$1=${l_answer}"
+    return 0
+}
