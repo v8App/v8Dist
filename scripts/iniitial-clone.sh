@@ -28,6 +28,7 @@ if [[ $? -ne 0 ]]; then
 fi
 
 #source in the setup of v8 on the host machine
+BUILD_ROOT=${TOP}
 source ${TOP}/scripts/setup-v8.sh
 
 echo ""
