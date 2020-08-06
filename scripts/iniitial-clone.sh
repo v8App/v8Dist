@@ -27,10 +27,16 @@ if [[ $? -ne 0 ]]; then
     exit 1
 fi
 
-#source in the setup of v8 on the host machine
-BUILD_ROOT=${TOP}
-source ${TOP}/scripts/setup-v8.sh
+#are we on Linux or Mac OS X
+OSX=`uname -a | grep Darwin | wc -l`
 
-echo ""
-echo ""
-echo "You will want to add this this path '${TOP}/depot_tools' to your PATH variable through an export or in your shell config."
+#if we are on mac os x then install depot_tools and v8 all others use Docker images
+if [[ ${OSX} -eq 1 ]]; then
+    #source in the setup of v8 on the host machine
+    BUILD_ROOT=${TOP}
+    source ${TOP}/scripts/setup-v8.sh
+    echo ""
+    echo ""
+    echo "You will want to add this this path '${TOP}/depot_tools' to your PATH variable through an export or in your shell config."
+fi
+
