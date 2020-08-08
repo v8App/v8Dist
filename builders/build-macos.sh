@@ -72,16 +72,9 @@ do
         exit 1
     fi
 
-    #add the include folder
-    cp -r ${BUILD_ROOT}/v8/include ${DIST_DIR}/include
-    if [[ $? -ne 0 ]]; then
-        echo "Failed to copy the include directory"
-        exit 1
-    fi
-
     # change to the the directory just above the dist we just built then zip it
     pushd ${DIST_DIR}/..
-    zip -r v8-${V8_VERSION}_${build}.zip ${BUILD_NAME}
+    zip -r ${BUILD_NAME}.zip ${BUILD_NAME}
     if [[ $? -ne 0 ]]; then
         echo "Failed to zip the distribution"
         exit 1

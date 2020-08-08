@@ -103,6 +103,16 @@ if [[ ${BUILD_LINUX} -eq 1 ]]; then
     source ${BUILD_ROOT}/builders/build-debian.sh
 fi
 
+#pack the includes for the distributions
+pushd ${BUILD_ROOT}/v8
+#add the include folder
+zip -r ${BUILD_ROOT}/dists/v8-${V8_VERSION}_include.zip ./include
+if [[ $? -ne 0 ]]; then
+    echo "Failed to copy the include directory"
+    exit 1
+fi
+popd
+
 echo "Done building distributions"
 
 #TODO:generate github release with all the dists
