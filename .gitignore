@@ -1,1 +1,4 @@
 .idea
+dists
+.cipd
+.v8_gclient_entries

@@ -10,6 +10,8 @@ BUILD_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 source ${BUILD_ROOT}/scripts/functions
 
+export PATH=${PATH}:${BUILD_ROOT}/depot_tools
+
 #if we are running an automated build then run with out interaction
 QUIET=0
 if [[ ! -z $1 ]] && [[ $1 == "--no-interaction" ]]; then
