@@ -86,6 +86,12 @@ if [[ ${BUILD_MAC_OS} -eq 0 ]] && [[ ${BUILD_IOS} -eq 0 ]] && [[ ${BUILD_LINUX} 
     exit 0
 fi
 
+mkdir -p ${BUILD_ROOT}/dists
+if [[ $? -ne 0 ]]; then
+    echo "Failed to create the dists directory"
+    exit 1
+fi
+
 if [[ ${BUILD_MAC_OS} -eq 1 ]]; then
     source ${BUILD_ROOT}/builders/build-macos.sh
 fi
