@@ -9,7 +9,7 @@ curl https://raw.githubusercontent.com/v8App/v8Dist/main/scripts/iniitial-clone.
 ```
 Windows
 ```cmd
-curl https://raw.githubusercontent.com/v8App/v8Dist/main/scripts/initial-clone.bat -o initial-clone.bat
+curl -o initial-clone.bat https://raw.githubusercontent.com/v8App/v8Dist/main/scripts/iniitial-clone.bat
 initial-clone.bat
 
 ```
