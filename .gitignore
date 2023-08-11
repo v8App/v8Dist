@@ -2,3 +2,7 @@
 dists
 .cipd
 .v8_gclient_entries
+scripts/v8Dist/.gclient_previous_sync_commits
+scripts/v8Dist/.v8_gclient
+scripts/v8Dist/depot_tools.zip
+scripts/v8Dist/v8Version

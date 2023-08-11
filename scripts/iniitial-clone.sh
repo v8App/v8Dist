@@ -7,22 +7,20 @@
 TOP="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 
 #check for git install
-git --version >> /dev/null
-if [[ $? -ne 0 ]]; then
+if ! git --version >> /dev/null; then
     echo "Doesn't seem as if git is installed, as getting the version failed"
     exit 1
 fi
 
 #clone the repository
-git clone https://github.com/v8App/v8Dist.git
-if [[ $? -ne 0 ]]; then
+
+if ! git clone https://github.com/v8App/v8Dist.git; then
     echo "Failed to clone the v8Dist repo"
     exit 1
 fi
 
 TOP=${TOP}/v8Dist
-cd ${TOP}
-if [[ $? -ne 0 ]]; then
+if ! cd "${TOP}"; then
     echo "Failed tochange to ${TOP}"
     exit 1
 fi
