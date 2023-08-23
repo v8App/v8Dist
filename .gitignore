@@ -6,3 +6,8 @@ scripts/v8Dist/.gclient_previous_sync_commits
 scripts/v8Dist/.v8_gclient
 scripts/v8Dist/depot_tools.zip
 scripts/v8Dist/v8Version
+/depot_tools/
+/_gclient_v8_6doufmxs/
+/v8/
+.run/build-v8.run.xml
+.gclient_previous_sync_commits
