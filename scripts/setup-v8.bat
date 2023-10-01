@@ -31,15 +31,15 @@ winsdksetup.exe /features OptionId.WindowsDesktopDebuggers /quiet /norestart
 if %ERRORLEVEL% neq 0 echo "Failed to install win sdk debugger required." && exit 1
 
 del /F winsdksetup.exe
+if not exist depot_tools\ (
+    mkdir depot_tools
+    if %ERRORLEVEL% neq 0 echo "Failed to create the depot_tools folder." && exit 1
 
-mkdir depot_tools
-if %ERRORLEVEL% neq 0 echo "Failed to create the depot_tools folder." && exit 1
+    tar -xf .\depot_tools.zip -C .\depot_tools
+    if %ERRORLEVEL% neq 0 echo "Failed to extract the depot tools." && exit 1
 
-tar -xf .\depot_tools.zip -C .\depot_tools
-if %ERRORLEVEL% neq 0 echo "Failed to extract the depot tools." && exit 1
-
-del /F depot_tools.zip
-
+    del /F depot_tools.zip
+)
 PATH %BUILD_ROOT%\depot_tools;%PATH%;
 
 cd %BUILD_ROOT\depot_tools%
@@ -63,7 +63,7 @@ set /p V8_VERSION=<%BUILD_ROOT%\v8Version
 
 cd %BUILD_ROOT%\v8
 if %ERRORLEVEL% neq 0 echo "Failed to change to v8." && exit 1
-
+echo "checking out %V8_VERSION%"
 git checkout branch-heads/%V8_VERSION%
 if %ERRORLEVEL% neq 0 echo "Failed to check out v8 version %V8_VERSION%." && exit 1
 

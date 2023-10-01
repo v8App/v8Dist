@@ -57,7 +57,7 @@ def setup_v8_target_oss(arch, gn_args):
     return gn_args
 
 
-def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_modules, platform_env=None):
+def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_modules, obj_ext, platform_env=None):
     if platform_env is None:
         platform_env = {}
     build_name = f'{v8_version}_{build}'
@@ -89,18 +89,17 @@ def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_m
         return
 
     # package the compiled v8 libs
-    for lib_name, module_dir in package_v8_modules.items():
+    for lib_name, module_dirs in package_v8_modules.items():
         print(f'packaging library {lib_name}')
-        if type(module_dir) is list:
-            for arg_value_2 in module_dir:
-                if not package_lib(arch, (build_dir / Path(f'obj/{arg_value_2}')),
-                                   (dist_dir / Path(f'{lib_name}.lib'))):
-                    print(f"Failed to package {lib_name} library")
-                    return
-        else:
-            if not package_lib(arch, (build_dir / Path(f'obj/{module_dir}')), (dist_dir / Path(f'{lib_name}.lib'))):
-                print(f"Failed to package {lib_name} library")
-                return
+        if type(module_dirs) is str:
+            module_dirs = [module_dirs]
+        full_module_dir = []
+        for module_dir in module_dirs:
+            full_module_dir.append(Path(module_dir) / Path(obj_ext))
+
+        if not package_lib(arch, (build_dir / Path('obj')), full_module_dir, (dist_dir / Path(f'{lib_name}'))):
+            print(f"Failed to package {lib_name} library")
+            return
 
     shutil.copyfile((build_dir / Path(f'icudtl.dat')), (dist_dir / Path(f'icudtl.dat')))
     shutil.copyfile((build_dir / Path(f'snapshot_blob.bin')), (dist_dir / Path(f'snapshot_blob.bin')))
@@ -125,9 +124,9 @@ def build_macos(host, arch):
         return
 
     core_build(f'macos-{arch}-release', arch, package_lib, setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
-               package_v8_libs)
+               package_v8_libs, '*.o')
     core_build(f'macos-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-               package_v8_libs)
+               package_v8_libs, '*.o')
 
 
 def build_ios(host, arch):
@@ -141,9 +140,9 @@ def build_ios(host, arch):
         return
 
     core_build(f'ios-{arch}-release', arch, package_lib, setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
-               package_v8_libs)
+               package_v8_libs, '*.o')
     core_build(f'ios-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-               package_v8_libs)
+               package_v8_libs, '*.o')
 
 
 def build_windows(host, arch):
@@ -157,9 +156,9 @@ def build_windows(host, arch):
     }
 
     core_build(f'win-{arch}-release', arch, package_lib, setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
-               package_v8_libs, env)
-    core_build(f'win-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-               package_v8_libs, env)
+               package_v8_libs, '*.obj', env)
+    #core_build(f'win-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+    #           package_v8_libs, '*.obj', env)
 
 
 def build_android(host, arch):

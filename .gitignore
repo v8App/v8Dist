@@ -11,3 +11,5 @@ scripts/v8Dist/v8Version
 /v8/
 .run/build-v8.run.xml
 .gclient_previous_sync_commits
+*.zip
+__pycache__
