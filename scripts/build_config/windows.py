@@ -9,6 +9,7 @@ gn_args_release = {
     'is_clang': 'false',
     'dcheck_always_on': 'false',
     'v8_static_library': 'true',
+    'v8_enable_pointer_compression_shared_cage ':'false',
 }
 
 gn_args_debug = {
@@ -21,6 +22,8 @@ gn_args_debug = {
     'v8_enable_slow_dchecks': 'false',
     'v8_optimized_debug': 'false',
     'v8_static_library': 'true',
+    'v8_enable_pointer_compression_shared_cage ': 'false',
+    'enable_iterator_debugging':'true'
 }
 
 build_v8_modules = [

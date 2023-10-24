@@ -1,16 +1,11 @@
 # v8Dist
 v8App's repository for building v8 distributions
 
- ##Get the code
- 
- Mac OS, Linux
- ```bash
-curl https://raw.githubusercontent.com/v8App/v8Dist/main/scripts/iniitial-clone.sh | bash -s
-```
-Windows
-```cmd
-curl -o initial-clone.bat https://raw.githubusercontent.com/v8App/v8Dist/main/scripts/iniitial-clone.bat
-initial-clone.bat
+Clone the repository then run setup.py it will setup the repo for being able to build v8.
 
-```
-As part of the windows setup for V8, Visual Studio will need to be installed first as the script will run the installer to make sure required compoenents are installed. When the installer window comes up if you have a modify button then the components need to be installed so click on modify. If you have close then the components are installed. You can close the window after installation is finished. A specific version of the windows sdk debugger also needs to be installed you will get a pop asking if you want to modify your computer from winsdksetup.exe, allow and it'll install the debugger.
+To build run the build-v8.py and specify the following arguments:
+* --build-root (Usually the top of the repository unless you want it to build elsewhere)
+* one or more of --macos, --ios, --windows, --android, --linux
+* optionally specify the --arch as one of x64, arm, arm32, arm64. Defaults to x64
+
+Currently only windows has been fully tested.

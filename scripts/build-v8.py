@@ -1,4 +1,5 @@
 import argparse
+import json
 import os
 import platform
 import shutil
@@ -32,6 +33,7 @@ if sys.version_info.major < 3 and (sys.version_info.major == 3 and sys.version_i
     sys.exit(1)
 build_root = Path(args.build_root).resolve()
 build_dir_root = build_root / Path('v8/out.gn')
+dist_dir = build_root / Path('dists')
 os.makedirs(build_dir_root, exist_ok=True)
 
 with open(build_root / 'v8Version') as f:
@@ -40,6 +42,20 @@ with open(build_root / 'v8Version') as f:
 v8_version = v8_version.strip()
 
 host_os = platform.system()
+
+github_token = None
+if 'GITHUB_API_TOKEN' in os.environ:
+    github_token = os.environ['GITHUB_API_TOKEN']
+    has_curl = subprocess.run(['curl', '--version'], shell=True)
+    if has_curl.returncode != 0:
+        print(
+            "Must have curl installed in order to upload releases. If you just want to build remove the GITHUB_API_TOKEN environment var")
+        sys.exit(1)
+
+if github_token is None or len(github_token) == 0:
+    # just to make sure it's None
+    github_token = None
+    print('Github token not found release distribution uploads will not be done')
 
 
 def setup_v8_target_oss(arch, gn_args):
@@ -105,7 +121,8 @@ def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_m
     shutil.copyfile((build_dir / Path(f'snapshot_blob.bin')), (dist_dir / Path(f'snapshot_blob.bin')))
 
     print(f'zipping up the libraries for {build_name}')
-    with zipfile.ZipFile(build_root / Path(f'{build_name}.zip'), 'w', zipfile.ZIP_DEFLATED) as lib_zip_ref:
+    with zipfile.ZipFile(build_root / Path('dists') / Path(f'{build_name}.zip'), 'w',
+                         zipfile.ZIP_DEFLATED) as lib_zip_ref:
         files = os.listdir(dist_dir)
         for file in files:
             if file.startswith('.'):
@@ -157,8 +174,8 @@ def build_windows(host, arch):
 
     core_build(f'win-{arch}-release', arch, package_lib, setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
                package_v8_libs, '*.obj', env)
-    #core_build(f'win-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-    #           package_v8_libs, '*.obj', env)
+    core_build(f'win-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+               package_v8_libs, '*.obj', env)
 
 
 def build_android(host, arch):
@@ -171,14 +188,50 @@ def build_linux(host, arch):
     return
 
 
+def make_github_call(url, method="GET", call_data=None):
+    # since requests isn't a standard library we' use curl
+    call_args = [
+        'curl',
+        "-L",
+        "-X",
+        method if method != "UPLOAD" else "POST",
+        "-H",
+        "Accept: application/vnd.github+json",
+        "-H",
+        "Authorization: Bearer " + github_token,
+        "-H",
+        "X-GitHub-Api-Version: 2022-11-28",
+    ]
+    if method == 'UPLOAD':
+        call_args.append('-H')
+        call_args.append('Content-Type: application/octet-stream')
+        call_args.append('-H')
+        call_args.append('Transfer-Encoding: chunked')
+
+    base_url = 'https://api.github.com/repos/v8App/v8Dist/'
+    call_args.append(base_url + url)
+    if call_data is not None and method == "POST":
+        call_args.append("-d")
+        call_args.append(json.dumps(call_data))
+    if method == "UPLOAD":
+        call_args.append('--data-binary')
+        call_args.append(call_data)
+    ret_code = subprocess.run(call_args, shell=True, capture_output=True)
+    if ret_code.returncode != 0:
+        print('Failed to execute curl command to github url:' + base_url + url)
+        sys.exit(1)
+    response = json.loads(ret_code.stdout.decode('utf-8'))
+    return response
+
+
 if args.macos:
     build_macos(host_os, args.arch)
 
 if args.ios:
     build_ios(host_os, args.arch)
 
-if args.windows:
-    build_windows(host_os, args.arch)
+# if args.windows:
+#    build_windows(host_os, args.arch)
 
 if args.android:
     build_android(host_os, args.arch)
@@ -188,9 +241,53 @@ if args.linux:
 
 # pack the include directory for the version
 print('zipping up the v8 includes directory')
-with zipfile.ZipFile(build_root / Path(f'v8-{v8_version}-includes.zip'), 'w', zipfile.ZIP_DEFLATED) as zip_ref:
+with zipfile.ZipFile(dist_dir / Path(f'v8-{v8_version}-includes.zip'), 'w',
+                     zipfile.ZIP_DEFLATED) as zip_ref:
     v8_path = build_root / Path('v8/include')
     for folder_name, sub_folders, file_names in os.walk(v8_path):
         zip_path = Path(folder_name).relative_to(build_root / Path('v8'))
         for file_name in file_names:
             zip_ref.write(Path(folder_name) / Path(file_name), arcname=zip_path / Path(file_name))
+
+if github_token is not None:
+    idx = 1
+    release = None
+    loop = True
+    while loop:
+        releases = make_github_call('releases?per_page=100%26page=' + str(idx))
+        if len(releases) == 0 or (releases is dict and 'message' in releases):
+            loop = False
+            continue
+        for g_release in releases:
+            if g_release['tag_name'] == v8_version:
+                release = g_release
+                loop = False
+        idx += 1
+    if release is None:
+        data = {
+            'tag_name': v8_version,
+            'name': v8_version,
+            'draft': True,
+            'generate_release_notes ': False,
+            'body': 'Packaged prebuilt libraries for ' + v8_version
+        }
+        release = make_github_call('releases', "POST", data)
+"""
+    Can't do the uploads through the API keep getting 413 entity to large errors
+    So we create the release only and have to go to the website and upload that way
+    if release is None:
+        print('Failed to create the release or find it')
+        sys.exit(1)
+
+    if 'upload_url' not in release or 'id' not in release:
+        print('Failed to find the upload url or id in the release data:' + json.dumps(release))
+        sys.exit(1)
+    upload_url = release['upload_url'].replace('{?name,label}', '')
+    release_id = release['id']
+    dists = os.listdir(dist_dir)
+    for dist in dists:
+        if '.zip' in dist:
+            url = upload_url+'?name='+dist
+            make_github_call(url, 'UPLOAD', "@"+str(dist_dir/Path(dist)))
+"""
+print('Finished building')
