@@ -67,21 +67,16 @@ vs_vc_path = None
 vc_env_cmd = None
 
 
-def package_lib(arch, module_path, lib_name):
-    global vs_vc_path, vc_env_cmd
-    if arch == 'x86_64':
-        arch = 'amd64'
-    if arch == 'x86_32':
-        arch = 'x86'
-
-    if vs_vc_path is None:
-        vs_vc_path = subprocess.run(['C:\\Program Files (x86)\\Microsoft Visual Studio\\Installer\\vswhere.exe',
-                                     '-latest', '-property', 'installationPath'], shell=True, capture_output=True)
-        vs_vc_path = vs_vc_path.stdout.decode('utf-8').strip()
-        vc_env_cmd = Path(vs_vc_path) / Path('VC/Auxiliary/Build/vcvarsall.bat')
-
-    result = subprocess.run([vc_env_cmd, arch, 'store', '10.0.22621.0', '&', 'lib', '/OUT:' + str(lib_name),
-                             '*.obj'], shell=True, cwd=module_path, capture_output=True)
+def package_lib(arch, build_dir, module_dirs, lib_name):
+    args = ['ar', 'r', str(lib_name), '*.a']
+    args.extend(module_dirs)
+    run_args = ''
+    for arg in args:
+        if type(arg) is not str:
+            run_args += ' ' + str(arg)
+        else:
+            run_args += ' ' + arg
+    result = subprocess.run(run_args, shell=True, cwd=build_dir, capture_output=True)
     if result.returncode != 0:
         return False
     return True

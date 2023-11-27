@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import argparse
 import json
 import os
@@ -42,11 +44,27 @@ with open(build_root / 'v8Version') as f:
 v8_version = v8_version.strip()
 
 host_os = platform.system()
+arg_as_list = False
+if host_os == 'Windows':
+    arg_as_list = True
+
+
+def generate_run_args(args: list, as_list: bool) -> list | str:
+    if as_list:
+        return args
+    ret_args = ''
+    for arg in args:
+        if type(arg) != str:
+            ret_args += ' ' + str(arg)
+        else:
+            ret_args += ' ' + arg
+    return ret_args
+
 
 github_token = None
 if 'GITHUB_API_TOKEN' in os.environ:
     github_token = os.environ['GITHUB_API_TOKEN']
-    has_curl = subprocess.run(['curl', '--version'], shell=True)
+    has_curl = subprocess.run(generate_run_args(['curl', '--version'], arg_as_list), shell=True)
     if has_curl.returncode != 0:
         print(
             "Must have curl installed in order to upload releases. If you just want to build remove the GITHUB_API_TOKEN environment var")
@@ -95,11 +113,12 @@ def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_m
         env.update(platform_env)
     env['PATH'] = str(Path(f'{build_root}/depot_tools').resolve()) + ';' + os.environ['PATH']
 
-    proc = subprocess.run(['gn', 'gen', build_dir], shell=True, env=env, cwd=v8_root)
+    proc = subprocess.run(generate_run_args(['gn', 'gen', build_dir], arg_as_list), shell=True, env=env, cwd=v8_root)
     if proc.returncode != 0:
         print("Failed to generate the build files")
         return
-    proc = subprocess.run(['ninja', '-C', rel_build_dir, *build_v8_modules], shell=True, env=env, cwd=v8_root)
+    proc = subprocess.run(generate_run_args(['ninja', '-C', rel_build_dir, *build_v8_modules], arg_as_list), shell=True,
+                          env=env, cwd=v8_root)
     if proc.returncode != 0:
         print('Failed to build v8 modules')
         return
@@ -216,6 +235,7 @@ def make_github_call(url, method="GET", call_data=None):
     if method == "UPLOAD":
         call_args.append('--data-binary')
         call_args.append(call_data)
+    call_args = generate_run_args(call_args, arg_as_list)
     ret_code = subprocess.run(call_args, shell=True, capture_output=True)
     if ret_code.returncode != 0:
         print('Failed to execute curl command to github url:' + base_url + url)
@@ -230,8 +250,8 @@ if args.macos:
 if args.ios:
     build_ios(host_os, args.arch)
 
-# if args.windows:
-#    build_windows(host_os, args.arch)
+if args.windows:
+    build_windows(host_os, args.arch)
 
 if args.android:
     build_android(host_os, args.arch)

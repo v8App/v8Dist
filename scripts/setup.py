@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import os
 import platform
 import subprocess
@@ -11,13 +13,26 @@ def wait_for_enter():
         input('Press enter to continue')
 
 
+def generate_run_args(args: list, as_list: bool) -> list | str:
+    if as_list:
+        return args
+    return ' '.join(args)
+
+
+host_os = platform.system()
+arg_as_list = False
+if host_os == 'Windows':
+    arg_as_list = True
+
 top = os.path.dirname(os.path.abspath(sys.argv[0]))
-has_git = subprocess.run(['git', '--version'], shell=True, cwd=top)
+
+has_git = subprocess.run(generate_run_args(['git', '--version'], arg_as_list), shell=True, cwd=top, capture_output=True)
 if has_git.returncode != 0:
     print("Must have git installed to run this script")
     sys.exit(1)
 
-has_git = subprocess.run(['git', 'rev-parse', '--show-toplevel'], shell=True, cwd=top, capture_output=True)
+has_git = subprocess.run(generate_run_args(['git', 'rev-parse', '--show-toplevel'], arg_as_list), shell=True, cwd=top,
+                         capture_output=True)
 if has_git.returncode != 0:
     print("Failed to get the repositories top level directory. make sure you have git version >=1.7.0"
           " and make sure this script is in the v8Dist repository")
@@ -25,7 +40,7 @@ if has_git.returncode != 0:
 
 top = has_git.stdout.decode('utf-8').strip()
 
-if host_os == "windows":
+if host_os == "Windows":
     has_git = subprocess.run(['curl', '--version'], shell=True, cwd=top)
     if has_git.returncode != 0:
         print("Must have curl installed to run this script")
@@ -84,24 +99,30 @@ if host_os == "windows":
     os.unlink(top + '/depot_tools.zip')
     os.unlink(top + '/winsdksetup.exe')
 else:
-    ret_code = subprocess.run(['git', 'clone', 'https://chromium.googlesource.com/chromium/tools/depot_tools.git'],
-                              shell=True, cwd=top)
-    if ret_code.returncode != 0:
-        print("Failed to clone the depot_tools repo")
-        sys.exit(1)
+    if os.path.exists(top+'/depot_tools') is False:
+        ret_code = subprocess.run(
+            generate_run_args(['git', 'clone', 'https://chromium.googlesource.com/chromium/tools/depot_tools.git'],
+                              arg_as_list), shell=True, cwd=top)
+        if ret_code.returncode != 0:
+            print("Failed to clone the depot_tools repo")
+            sys.exit(1)
 
 depot_env = os.environ.copy()
 # we want it at the front
-depot_env['PATH'] = top + '/depot_tools;' + depot_env['PATH']
-# this only matters on windows
-depot_env['DEPOT_TOOLS_WIN_TOOLCHAIN'] = '0'
-ret_code = subprocess.run(['gclient', 'sync', '--gclientfile=.v8_gclient', '--with_branch_heads', '--with_tags'],
-                          shell=True, cwd=top, env=depot_env)
+if host_os == 'Windows':
+    depot_env['PATH'] = top + '/depot_tools;' + depot_env['PATH']
+    depot_env['DEPOT_TOOLS_WIN_TOOLCHAIN'] = '0'
+else:
+    depot_env['PATH'] = top + '/depot_tools:' + depot_env['PATH']
+
+ret_code = subprocess.run(
+    generate_run_args(['gclient', 'sync', '--gclientfile=.v8_gclient', '--with_branch_heads', '--with_tags'],
+                      arg_as_list),  shell=True, cwd=top, env=depot_env)
 if ret_code.returncode != 0:
     print('Failed to do initial gclient sync for v8')
     sys.exit(1)
 
-ret_code = subprocess.run(['fetch', 'v8',],
+ret_code = subprocess.run(generate_run_args(['fetch', 'v8', ], arg_as_list),
                           shell=True, cwd=top + '/v8', env=depot_env)
 if ret_code.returncode != 0:
     print('Failed to fetch v8')
@@ -110,7 +131,7 @@ if ret_code.returncode != 0:
 with open(top + '/v8Version', 'r') as f:
     v8_version = f.read()
 
-ret_code = subprocess.run(['git', 'checkout', v8_version],
+ret_code = subprocess.run(generate_run_args(['git', 'checkout', v8_version], arg_as_list),
                           shell=True, cwd=top + '/v8', env=depot_env)
 if ret_code.returncode != 0:
     print('Failed to checkout v8 version: ' + v8_version)
