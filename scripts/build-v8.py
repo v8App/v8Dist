@@ -49,12 +49,12 @@ if host_os == 'Windows':
     arg_as_list = True
 
 
-def generate_run_args(args: list, as_list: bool) -> list | str:
+def generate_run_args(in_args: list, as_list: bool) -> list | str:
     if as_list:
-        return args
+        return in_args
     ret_args = ''
-    for arg in args:
-        if type(arg) != str:
+    for arg in in_args:
+        if type(arg) is not str:
             ret_args += ' ' + str(arg)
         else:
             ret_args += ' ' + arg
@@ -67,7 +67,8 @@ if 'GITHUB_API_TOKEN' in os.environ:
     has_curl = subprocess.run(generate_run_args(['curl', '--version'], arg_as_list), shell=True)
     if has_curl.returncode != 0:
         print(
-            "Must have curl installed in order to upload releases. If you just want to build remove the GITHUB_API_TOKEN environment var")
+            "Must have curl installed in order to upload releases. If you just want to "
+            "build remove the GITHUB_API_TOKEN environment var")
         sys.exit(1)
 
 if github_token is None or len(github_token) == 0:
@@ -77,21 +78,21 @@ if github_token is None or len(github_token) == 0:
 
 
 def setup_v8_target_oss(arch, gn_args):
-    host_arch = platform.machine().lower()
+    # host_arch = platform.machine().lower()
 
-    if host_arch in ['amd64', 'x86_64']:
-        host_arch = 'x64'
-    elif host_arch in ['arm64']:
-        host_arch = 'arm64'
+    # if host_arch in ['amd64', 'x86_64']:
+    #    host_arch = 'x64'
+    # elif host_arch in ['arm64']:
+    #    host_arch = 'arm64'
 
     # quotes are important here
-    gn_args['target_cpu'] = f'"{host_arch}"'
     gn_args['v8_target_cpu'] = f'"{arch}"'
+    gn_args['target_cpu'] = f'"{arch}"'
 
     return gn_args
 
 
-def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_modules, obj_ext, platform_env=None):
+def core_build(build, gn_args, build_v8_modules, package_v8_modules, platform_env=None):
     if platform_env is None:
         platform_env = {}
     build_name = f'{v8_version}_{build}'
@@ -124,17 +125,9 @@ def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_m
         return
 
     # package the compiled v8 libs
-    for lib_name, module_dirs in package_v8_modules.items():
-        print(f'packaging library {lib_name}')
-        if type(module_dirs) is str:
-            module_dirs = [module_dirs]
-        full_module_dir = []
-        for module_dir in module_dirs:
-            full_module_dir.append(Path(module_dir) / Path(obj_ext))
-
-        if not package_lib(arch, (build_dir / Path('obj')), full_module_dir, (dist_dir / Path(f'{lib_name}'))):
-            print(f"Failed to package {lib_name} library")
-            return
+    for lib_path, lib_name in package_v8_modules.items():
+        print(f'copying library {lib_name}')
+        shutil.copyfile((build_dir / Path(lib_path)), (dist_dir / Path(lib_name)))
 
     shutil.copyfile((build_dir / Path(f'icudtl.dat')), (dist_dir / Path(f'icudtl.dat')))
     shutil.copyfile((build_dir / Path(f'snapshot_blob.bin')), (dist_dir / Path(f'snapshot_blob.bin')))
@@ -150,7 +143,7 @@ def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_m
 
 
 def build_macos(host, arch):
-    from build_config.macos import gn_args_debug, gn_args_release, package_lib, package_v8_libs, build_v8_modules
+    from build_config.macos import gn_args_debug, gn_args_release, package_v8_libs, build_v8_modules
     if host != 'Darwin':
         print('Skipping macos build as we are not on a MacOs host')
         return
@@ -159,14 +152,14 @@ def build_macos(host, arch):
         print('macos can only be built for arm64 or x64')
         return
 
-    core_build(f'macos-{arch}-release', arch, package_lib, setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
-               package_v8_libs, '*.o')
-    core_build(f'macos-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-               package_v8_libs, '*.o')
+    core_build(f'macos-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
+               package_v8_libs)
+    core_build(f'macos-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+               package_v8_libs)
 
 
 def build_ios(host, arch):
-    from build_config.ios import gn_args_debug, gn_args_release, package_lib, package_v8_libs, build_v8_modules
+    from build_config.ios import gn_args_debug, gn_args_release, package_v8_libs, build_v8_modules
     if host != 'Darwin':
         print('Skipping ios build as we are not on a MacOs host')
         return
@@ -175,14 +168,14 @@ def build_ios(host, arch):
         print('ios can only be built for arm64 or x64 simulator')
         return
 
-    core_build(f'ios-{arch}-release', arch, package_lib, setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
-               package_v8_libs, '*.o')
-    core_build(f'ios-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-               package_v8_libs, '*.o')
+    core_build(f'ios-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
+               package_v8_libs)
+    core_build(f'ios-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+               package_v8_libs)
 
 
 def build_windows(host, arch):
-    from build_config.windows import gn_args_debug, gn_args_release, package_lib, package_v8_libs, build_v8_modules
+    from build_config.windows import gn_args_debug, gn_args_release, package_v8_libs, build_v8_modules
     if host != 'Windows':
         print('Skipping ios build as we are not on a Windows host')
         return
@@ -191,10 +184,10 @@ def build_windows(host, arch):
         'DEPOT_TOOLS_WIN_TOOLCHAIN': '0'
     }
 
-    core_build(f'win-{arch}-release', arch, package_lib, setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
-               package_v8_libs, '*.obj', env)
-    core_build(f'win-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-               package_v8_libs, '*.obj', env)
+    core_build(f'win-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
+               package_v8_libs, env)
+    core_build(f'win-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+               package_v8_libs, env)
 
 
 def build_android(host, arch):
