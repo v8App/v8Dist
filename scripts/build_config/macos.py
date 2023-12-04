@@ -41,7 +41,7 @@ build_v8_modules = [
     'inspector'
 ]
 
-package_v8_libs = {
+copy_v8_libs = {
     'obj/third_party/zlib/libchrome_zlib.a': 'libchrome_zlib.a',
     'obj/third_party/zlib/google/libcompression_utils_portable.a': 'libcompression_utils_portable.a',
     'obj/libcppgc_base.a': 'libcppgc_base.a',
@@ -56,12 +56,31 @@ package_v8_libs = {
     'obj/libv8_base_without_compiler.a': 'libv8_base_without_compiler.a',
     'obj/libv8_bigint.a': 'libv8_bigint.a',
     'obj/libv8_compiler.a': 'libv8_compiler.a',
-    'obj/libv8_heap_base.a':'libv8_heap_base.a',
+    'obj/libv8_heap_base.a': 'libv8_heap_base.a',
     'obj/libv8_libbase.a': 'libv8_libbase.a',
     'obj/libv8_libplatform.a': 'libv8_libplatform.a',
     'obj/libv8_snapshot.a': 'libv8_snapshot.a',
     'obj/libv8_turboshaft.a': 'libv8_turboshaft.a',
+
 }
 
-vs_vc_path = None
-vc_env_cmd = None
+package_v8_libs = {
+    # these don't get bundled into the zlib one so we have to manually add them
+    'zlib_extra.a': [
+    'obj/third_party/zlib/zlib_adler32_simd/*.o' ,
+    'obj/third_party/zlib/zlib_crc32_simd/*.o' ,
+    'obj/third_party/zlib/zlib_inflate_chunk_simd/*.o' ,
+    ]
+}
+
+
+def package_lib(arch, build_dir, module_dirs, lib_name):
+    args = ['ar', 'r', str(lib_name)]
+    args.extend(module_dirs)
+    run_args = ''
+    for arg in args:
+        if type(arg) is not str:
+            run_args += ' ' + str(arg)
+        else:
+            run_args += ' ' + arg
+    result = subprocess.run(run_args, shell=True, cwd=build_dir, capture_output=True)
