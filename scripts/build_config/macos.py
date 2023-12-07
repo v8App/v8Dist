@@ -1,3 +1,4 @@
+import os.path
 import subprocess
 from pathlib import Path
 
@@ -10,6 +11,7 @@ gn_args_release = {
     'use_custom_libcxx': 'false',
     'v8_static_library': 'true',
     'v8_enable_pointer_compression_shared_cage ': 'false',
+    "v8_use_libm_trig_functions":"false",
 }
 
 gn_args_debug = {
@@ -23,7 +25,8 @@ gn_args_debug = {
     'use_custom_libcxx': 'false',
     'v8_static_library': 'true',
     'v8_enable_pointer_compression_shared_cage ': 'false',
-    'enable_iterator_debugging': 'true'
+    'enable_iterator_debugging': 'true',
+    "v8_use_libm_trig_functions": "false",
 }
 
 build_v8_modules = [
@@ -66,9 +69,10 @@ copy_v8_libs = {
 
 package_v8_libs = {
     # these don't get bundled into the zlib one so we have to manually add them
-    'zlib_extra.a': [
+    'libzlib_extra.a': [
     'obj/third_party/zlib/zlib_adler32_simd/*.o' ,
     'obj/third_party/zlib/zlib_crc32_simd/*.o' ,
+    'obj/third_party/zlib/zlib_arm_crc32/*.o' ,
     'obj/third_party/zlib/zlib_inflate_chunk_simd/*.o' ,
     ]
 }
@@ -76,7 +80,9 @@ package_v8_libs = {
 
 def package_lib(arch, build_dir, module_dirs, lib_name):
     args = ['ar', 'r', str(lib_name)]
-    args.extend(module_dirs)
+    for mod_dir in module_dirs:
+        if os.path.exists(build_dir / Path(mod_dir).parent):
+            args.append(mod_dir)
     run_args = ''
     for arg in args:
         if type(arg) is not str:
@@ -84,3 +90,4 @@ def package_lib(arch, build_dir, module_dirs, lib_name):
         else:
             run_args += ' ' + arg
     result = subprocess.run(run_args, shell=True, cwd=build_dir, capture_output=True)
+    return result.returncode == 0

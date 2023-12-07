@@ -92,17 +92,18 @@ def setup_v8_target_oss(arch, gn_args):
     return gn_args
 
 
-def core_build(arch, build, gn_args, build_v8_modules, copy_v8_libs, package_v8_modules, package_lib, platform_env=None):
+def core_build(arch, build, gn_args, build_v8_modules, copy_v8_libs, package_v8_modules, package_lib,
+               platform_env=None):
     if platform_env is None:
         platform_env = {}
     build_name = f'{v8_version}_{build}'
     v8_root = build_root / Path('v8')
     rel_build_dir = Path('out.gn') / Path(build)
     build_dir = v8_root / Path('out.gn') / Path(build)
-    dist_dir = build_root / Path(f'dists/{build_name}')
+    core_dist_dir = build_root / Path(f'dists/{build_name}')
 
     os.makedirs(build_dir, exist_ok=True)
-    os.makedirs(dist_dir, exist_ok=True)
+    os.makedirs(core_dist_dir, exist_ok=True)
 
     dst_arg_file = build_dir / Path('args.gn')
     with open(dst_arg_file, 'w') as arg_file:
@@ -112,7 +113,12 @@ def core_build(arch, build, gn_args, build_v8_modules, copy_v8_libs, package_v8_
     env = os.environ.copy()
     if env is not None:
         env.update(platform_env)
-    env['PATH'] = str(Path(f'{build_root}/depot_tools').resolve()) + ';' + os.environ['PATH']
+    if host_os == 'Windowa':
+        seperator = ';'
+    else:
+        seperator = ':'
+
+    env['PATH'] = str(Path(f'{build_root}/depot_tools').resolve()) + seperator + os.environ['PATH']
 
     proc = subprocess.run(generate_run_args(['gn', 'gen', build_dir], arg_as_list), shell=True, env=env, cwd=v8_root)
     if proc.returncode != 0:
@@ -132,29 +138,30 @@ def core_build(arch, build, gn_args, build_v8_modules, copy_v8_libs, package_v8_
         for module_dir in module_dirs:
             full_module_dir.append(Path(module_dir))
 
-        if not package_lib(arch, build_dir , full_module_dir, (dist_dir / Path(f'{lib_name}'))):
+        if not package_lib(arch, build_dir, full_module_dir, (core_dist_dir / Path(f'{lib_name}'))):
             print(f"Failed to package {lib_name} library")
             return
     # package the compiled v8 libs
     for lib_path, lib_name in copy_v8_libs.items():
         print(f'copying library {lib_name}')
-        shutil.copyfile((build_dir / Path(lib_path)), (dist_dir / Path(lib_name)))
+        shutil.copyfile((build_dir / Path(lib_path)), (core_dist_dir / Path(lib_name)))
 
-    shutil.copyfile((build_dir / Path(f'icudtl.dat')), (dist_dir / Path(f'icudtl.dat')))
-    shutil.copyfile((build_dir / Path(f'snapshot_blob.bin')), (dist_dir / Path(f'snapshot_blob.bin')))
+    shutil.copyfile((build_dir / Path(f'icudtl.dat')), (core_dist_dir / Path(f'icudtl.dat')))
+    shutil.copyfile((build_dir / Path(f'snapshot_blob.bin')), (core_dist_dir / Path(f'snapshot_blob.bin')))
 
     print(f'zipping up the libraries for {build_name}')
     with zipfile.ZipFile(build_root / Path('dists') / Path(f'{build_name}.zip'), 'w',
                          zipfile.ZIP_DEFLATED) as lib_zip_ref:
-        files = os.listdir(dist_dir)
+        files = os.listdir(core_dist_dir)
         for file in files:
             if file.startswith('.'):
                 continue
-            lib_zip_ref.write(dist_dir / Path(file), arcname=Path(dist_dir.name) / Path(file))
+            lib_zip_ref.write(core_dist_dir / Path(file), arcname=Path(core_dist_dir.name) / Path(file))
 
 
 def build_macos(host, arch):
-    from build_config.macos import gn_args_debug, gn_args_release, copy_v8_libs, package_v8_libs, build_v8_modules, package_lib
+    from build_config.macos import gn_args_debug, gn_args_release, copy_v8_libs, package_v8_libs, build_v8_modules, \
+        package_lib
     if host != 'Darwin':
         print('Skipping macos build as we are not on a MacOs host')
         return
@@ -179,14 +186,15 @@ def build_ios(host, arch):
         print('ios can only be built for arm64 or x64 simulator')
         return
 
-    core_build(f'ios-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
-               package_v8_libs)
-    core_build(f'ios-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-               package_v8_libs)
+    # core_build(f'ios-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
+    #           package_v8_libs)
+    # core_build(f'ios-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+    #           package_v8_libs)
 
 
 def build_windows(host, arch):
-    from build_config.windows import gn_args_debug, gn_args_release, package_v8_libs, copy_v8_libs, build_v8_modules, package_lib
+    from build_config.windows import gn_args_debug, gn_args_release, package_v8_libs, copy_v8_libs, build_v8_modules, \
+        package_lib
     if host != 'Windows':
         print('Skipping ios build as we are not on a Windows host')
         return
@@ -201,11 +209,13 @@ def build_windows(host, arch):
                copy_v8_libs, package_v8_libs, package_lib, env)
 
 
+# noinspection PyUnusedLocal
 def build_android(host, arch):
     print('TODO')
     return
 
 
+# noinspection PyUnusedLocal
 def build_linux(host, arch):
     print('TODO')
     return
