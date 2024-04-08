@@ -11,7 +11,8 @@ gn_args_release = {
     'use_custom_libcxx': 'false',
     'v8_static_library': 'true',
     'v8_enable_pointer_compression_shared_cage ': 'false',
-    "v8_use_libm_trig_functions":"false",
+    "v8_use_libm_trig_functions": "false",
+    "icu_disable_thin_archive": "true",
 }
 
 gn_args_debug = {
@@ -27,6 +28,7 @@ gn_args_debug = {
     'v8_enable_pointer_compression_shared_cage ': 'false',
     'enable_iterator_debugging': 'true',
     "v8_use_libm_trig_functions": "false",
+    "icu_disable_thin_archive": "true",
 }
 
 build_v8_modules = [
@@ -44,37 +46,145 @@ build_v8_modules = [
     'inspector'
 ]
 
-copy_v8_libs = {
-    'obj/third_party/zlib/libchrome_zlib.a': 'libchrome_zlib.a',
-    'obj/third_party/zlib/google/libcompression_utils_portable.a': 'libcompression_utils_portable.a',
-    'obj/libcppgc_base.a': 'libcppgc_base.a',
-    'obj/third_party/inspector_protocol/libcrdtp_platform.a': 'libcrdtp_platform.a',
-    'obj/third_party/inspector_protocol/libcrdtp.a': 'libcrdtp.a',
-    'obj/third_party/icu/libicui18n.a': 'libicui18n.a',
-    'obj/third_party/icu/libicuuc.a': 'libicuuc.a',
-    'obj/src/inspector/libinspector_string_conversions.a': 'libinspector_string_conversions.a',
-    'obj/src/inspector/libinspector.a': 'libinspector.a',
-    'obj/libtorque_generated_definitions.a': 'libtorque_generated_definitions.a',
-    'obj/libtorque_generated_initializers.a': 'libtorque_generated_initializers.a',
-    'obj/libv8_base_without_compiler.a': 'libv8_base_without_compiler.a',
-    'obj/libv8_bigint.a': 'libv8_bigint.a',
-    'obj/libv8_compiler.a': 'libv8_compiler.a',
-    'obj/libv8_heap_base.a': 'libv8_heap_base.a',
-    'obj/libv8_libbase.a': 'libv8_libbase.a',
-    'obj/libv8_libplatform.a': 'libv8_libplatform.a',
-    'obj/libv8_snapshot.a': 'libv8_snapshot.a',
-    'obj/libv8_turboshaft.a': 'libv8_turboshaft.a',
-
-}
-
 package_v8_libs = {
-    # these don't get bundled into the zlib one so we have to manually add them
-    'libzlib_extra.a': [
-    'obj/third_party/zlib/zlib_adler32_simd/*.o' ,
-    'obj/third_party/zlib/zlib_crc32_simd/*.o' ,
-    'obj/third_party/zlib/zlib_arm_crc32/*.o' ,
-    'obj/third_party/zlib/zlib_inflate_chunk_simd/*.o' ,
-    ]
+    "abseil.a": {
+        "noarch": [
+            "obj/third_party/abseil-cpp/absl/base/base/*.o",
+            "obj/third_party/abseil-cpp/absl/base/log_severity/*.o",
+            "obj/third_party/abseil-cpp/absl/base/malloc_internal/*.o",
+            "obj/third_party/abseil-cpp/absl/base/raw_logging_internal/*.o",
+            "obj/third_party/abseil-cpp/absl/base/spinlock_wait/*.o",
+            "obj/third_party/abseil-cpp/absl/base/strerror/*.o",
+            "obj/third_party/abseil-cpp/absl/base/throw_delegate/*.o",
+            "obj/third_party/abseil-cpp/absl/container/hashtablez_sampler/*.o",
+            "obj/third_party/abseil-cpp/absl/container/raw_hash_set/*.o",
+            "obj/third_party/abseil-cpp/absl/crc/cpu_detect/*.o",
+            "obj/third_party/abseil-cpp/absl/crc/crc32c/*.o",
+            "obj/third_party/abseil-cpp/absl/crc/crc_cord_state/*.o",
+            "obj/third_party/abseil-cpp/absl/crc/crc_internal/*.o",
+            "obj/third_party/abseil-cpp/absl/debugging/debugging_internal/*.o",
+            "obj/third_party/abseil-cpp/absl/debugging/demangle_internal/*.o",
+            "obj/third_party/abseil-cpp/absl/debugging/examine_stack/*.o",
+            "obj/third_party/abseil-cpp/absl/debugging/failure_signal_handler/*.o",
+            "obj/third_party/abseil-cpp/absl/debugging/stacktrace/*.o",
+            "obj/third_party/abseil-cpp/absl/debugging/symbolize/*.o",
+            "obj/third_party/abseil-cpp/absl/hash/city/*.o",
+            "obj/third_party/abseil-cpp/absl/hash/hash/*.o",
+            "obj/third_party/abseil-cpp/absl/hash/low_level_hash/*.o",
+            "obj/third_party/abseil-cpp/absl/log/die_if_null/*.o",
+            "obj/third_party/abseil-cpp/absl/log/globals/*.o",
+            "obj/third_party/abseil-cpp/absl/log/internal/check_op/*.o",
+            "obj/third_party/abseil-cpp/absl/log/internal/conditions/*.o",
+            "obj/third_party/abseil-cpp/absl/log/internal/fnmatch/*.o",
+            "obj/third_party/abseil-cpp/absl/log/internal/format/*.o",
+            "obj/third_party/abseil-cpp/absl/log/internal/globals/*.o",
+            "obj/third_party/abseil-cpp/absl/log/internal/log_message/*.o",
+            "obj/third_party/abseil-cpp/absl/log/internal/log_sink_set/*.o",
+            "obj/third_party/abseil-cpp/absl/log/internal/nullguard/*.o",
+            "obj/third_party/abseil-cpp/absl/log/internal/proto/*.o",
+            "obj/third_party/abseil-cpp/absl/log/internal/vlog_config/*.o",
+            "obj/third_party/abseil-cpp/absl/log/log_entry/*.o",
+            "obj/third_party/abseil-cpp/absl/log/log_sink/*.o",
+            "obj/third_party/abseil-cpp/absl/numeric/int128/*.o",
+            "obj/third_party/abseil-cpp/absl/profiling/exponential_biased/*.o",
+            "obj/third_party/abseil-cpp/absl/random/distributions/*.o",
+            "obj/third_party/abseil-cpp/absl/random/internal/platform/*.o",
+            "obj/third_party/abseil-cpp/absl/random/internal/pool_urbg/*.o",
+            "obj/third_party/abseil-cpp/absl/random/internal/randen/*.o",
+            "obj/third_party/abseil-cpp/absl/random/internal/randen_hwaes/*.o",
+            "obj/third_party/abseil-cpp/absl/random/internal/randen_hwaes_impl/*.o",
+            "obj/third_party/abseil-cpp/absl/random/internal/randen_slow/*.o",
+            "obj/third_party/abseil-cpp/absl/random/internal/seed_material/*.o",
+            "obj/third_party/abseil-cpp/absl/random/seed_gen_exception/*.o",
+            "obj/third_party/abseil-cpp/absl/random/seed_sequences/*.o",
+            "obj/third_party/abseil-cpp/absl/status/status/*.o",
+            "obj/third_party/abseil-cpp/absl/status/statusor/*.o",
+            "obj/third_party/abseil-cpp/absl/strings/cord/*.o",
+            "obj/third_party/abseil-cpp/absl/strings/cord_internal/*.o",
+            "obj/third_party/abseil-cpp/absl/strings/cordz_functions/*.o",
+            "obj/third_party/abseil-cpp/absl/strings/cordz_handle/*.o",
+            "obj/third_party/abseil-cpp/absl/strings/cordz_info/*.o",
+            "obj/third_party/abseil-cpp/absl/strings/internal/*.o",
+            "obj/third_party/abseil-cpp/absl/strings/str_format_internal/*.o",
+            "obj/third_party/abseil-cpp/absl/strings/string_view/*.o",
+            "obj/third_party/abseil-cpp/absl/strings/strings/*.o",
+            "obj/third_party/abseil-cpp/absl/synchronization/graphcycles_internal/*.o",
+            "obj/third_party/abseil-cpp/absl/synchronization/kernel_timeout_internal/*.o",
+            "obj/third_party/abseil-cpp/absl/synchronization/synchronization/*.o",
+            "obj/third_party/abseil-cpp/absl/time/cctz/civil_time/*.o",
+            "obj/third_party/abseil-cpp/absl/time/cctz/time_zone/*.o",
+            "obj/third_party/abseil-cpp/absl/time/time/*.o",
+            "obj/third_party/abseil-cpp/absl/types/bind_optional_access/*.o",
+            "obj/third_party/abseil-cpp/absl/types/bad_variant_access/*.o",
+        ],
+    },
+    'libchrome_zlib.a': {
+        'noarch':
+            [
+                'obj/third_party/zlib/google/compression_utils_portable/*.o',
+                'obj/third_party/zlib/zlib/*.o',
+                'obj/third_party/zlib/zlib_adler32_simd/*.o',
+                'obj/third_party/zlib/zlib_inflate_chunk_simd/*.o',
+            ],
+        'x64': [
+            'obj/third_party/zlib/zlib_crc32_simd/*.o',
+        ],
+        'arm64':
+            [
+                'obj/third_party/zlib/zlib_arm_crc32/*.o',
+            ]
+    },
+    'libcppgc_base.a': [
+        'obj/cppgc_base/*.o'
+    ],
+    'libcrdtp_platform.a': [
+        'obj/third_party/inspector_protocol/crdtp_platform/*.o'
+    ],
+    'libcrdtp.a': [
+        'obj/third_party/inspector_protocol/crdtp/*.o'
+    ],
+    'libicui18n.a': [
+        'obj/third_party/icu/icui18n/*.o'
+    ],
+    'libicuuc.a': [
+        'obj/third_party/icu/icuuc_private/*.o'
+    ],
+    'libinspector_string_conversions.a': [
+        'obj/src/inspector/inspector_string_conversions/*.o'
+    ],
+    'libinspector.a': [
+        'obj/src/inspector/inspector/*.o'
+    ],
+    'libtorque_generated_definitions.a': [
+        'obj/torque_generated_definitions/*.o'
+    ],
+    'libtorque_generated_initializers.a': [
+        'obj/torque_generated_initializers/*.o'
+    ],
+    'libv8_base_without_compiler.a': [
+        'obj/v8_base_without_compiler/*.o'
+    ],
+    'libv8_bigint.a': [
+        'obj/v8_bigint/*.o'
+    ],
+    'libv8_compiler.a': [
+        'obj/v8_compiler/*.o'
+    ],
+    'libv8_heap_base.a': [
+        'obj/v8_heap_base/*.o'
+    ],
+    'libv8_libbase.a': [
+        'obj/v8_libbase/*.o'
+    ],
+    'libv8_libplatform.a': [
+        'obj/v8_libplatform/*.o'
+    ],
+    'libv8_snapshot.a': [
+        'obj/v8_snapshot/*.o'
+    ],
+    'libv8_turboshaft.a': [
+        'obj/v8_turboshaft/*.o'
+    ],
 }
 
 

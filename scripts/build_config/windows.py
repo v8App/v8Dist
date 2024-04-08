@@ -44,27 +44,66 @@ build_v8_modules = [
 
 # We rename them to .a since bazel doesn't like the .lib extension
 copy_v8_libs = {
-    'obj/third_party/zlib/zlib.lib': 'zlib.a',
-    'obj/third_party/zlib/google/compression_utils_portable.lib': 'compression_utils_portable.a',
-    'obj/third_party/inspector_protocol/crdtp_platform.lib': 'crdtp_platform.a',
-    'obj/third_party/inspector_protocol/crdtp.lib': 'crdtp.a',
-    'obj/third_party/icu/icui18n.lib': 'icui18n.a',
-    'obj/third_party/icu/icuuc.lib': 'icuuc.a',
-    'obj/src/inspector/inspector_string_conversions.lib': 'inspector_string_conversions.a',
-    'obj/src/inspector/inspector.lib': 'inspector.a',
-    'obj/cppgc_base.lib': 'cppgc_base.a',
-    'obj/torque_generated_definitions.lib': 'torque_generated_definitions.a',
-    'obj/torque_generated_initializers.lib': 'torque_generated_initializers.a',
-    'obj/v8_base_without_compiler_0.lib': 'v8_base_without_compiler_0.a',
-    'obj/v8_base_without_compiler_1.lib': 'v8_base_without_compiler_1.a',
-    'obj/v8_bigint.lib': 'v8_bigint.a',
-    'obj/v8_compiler.lib': 'v8_compiler.a',
-    'obj/v8_heap_base.lib': 'v8_heap_base.a',
-    'obj/v8_libbase.lib': 'v8_libbase.a',
-    'obj/v8_libplatform.lib': 'v8_libplatform.a',
-    'obj/v8_snapshot.lib': 'v8_snapshot.a',
-    'obj/v8_turboshaft.lib': 'v8_turboshaft.a',
+    'libchrome_zlib.a': [
+        'obj/third_party/zlib/google/compression_utils_portable'
+        'obj/third_party/zlib/zlib',
+        'obj/third_party/zlib/zlib_adler32_simd',
+        'obj/third_party/zlib/zlib_arm_crc32',
+        'obj/third_party/zlib/zlib_inflate_chunk_simd',
+    ],
+    'libcppgc_base.a': [
+        'obj/cppgc_base'
+    ],
+    'libcrdtp_platform.a': [
+        'obj/third_party/inspector_protocol/crdtp_platform'
+    ],
+    'libcrdtp.a': [
+        'obj/third_party/inspector_protocol/crdtp'
+    ],
+    'libicui18n.a': [
+        'obj/third_party/icu/libicui18n'
+    ],
+    'libicuuc.a': [
+        'obj/third_party/icu/libicuuc'
+    ],
+    'libinspector_string_conversions.a': [
+        'obj/src/inspector/inspector_string_conversions'
+    ],
+    'libinspector.a': [
+        'obj/src/inspector/inspector'
+    ],
+    'libtorque_generated_definitions.a': [
+        'obj/torque_generated_definitions'
+    ],
+    'libtorque_generated_initializers.a': [
+        'obj/torque_generated_initializers'
+    ],
+    'libv8_base_without_compiler.a': [
+        'obj/v8_base_without_compiler'
+    ],
+    'libv8_bigint.a': [
+        'obj/v8_bigint'
+    ],
+    'libv8_compiler.a': [
+        'obj/v8_compiler'
+    ],
+    'libv8_heap_base.a': [
+        'obj/v8_heap_base'
+    ],
+    'libv8_libbase.a': [
+        'obj/v8_libbase'
+    ],
+    'libv8_libplatform.a': [
+        'obj/v8_libplatform'
+    ],
+    'libv8_snapshot.a': [
+        'obj/v8_snapshot'
+    ],
+    'libv8_turboshaft.a': [
+        'obj/v8_turboshaft'
+    ],
 }
+
 
 package_v8_libs = {
     # these don't get bundled into the zlib one so we have to manually add them
