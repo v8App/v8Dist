@@ -21,14 +21,16 @@ platforms.add_argument('--windows', action='store_true', help='Specifies to buil
 platforms.add_argument('--android', action='store_true', help='Specifies to build the android version of the library')
 platforms.add_argument('--linux', action='store_true', help='Specifies to build the linux version of the library')
 
-parser.add_argument('--arch', type=str, choices=['x64', 'arm', 'arm32', 'arm64'],
-                    default='x64', help='Specifies to architecture to build for. '
-                                        'Defaults to x64 for all platforms but ios which defaults to arm64')
+parser.add_argument('--arch', choices=['x64', 'arm', 'arm32', 'arm64'], action="append",
+                    default=[], help='Specifies to architecture to build for. '
+                                     'Defaults to x64 for all platforms but ios which defaults to arm64')
 args = parser.parse_args()
 
 if not args.macos and not args.ios and not args.windows and not args.android and not args.linux:
     parser.print_help()
     sys.exit(1)
+if len(args.arch) == 0:
+    args.arch.append('x64')
 # require at least python 3.4
 if sys.version_info.major < 3 and (sys.version_info.major == 3 and sys.version_info.minor < 4):
     print('Require atr least python >= 3.4')
@@ -49,12 +51,12 @@ if host_os == 'Windows':
     arg_as_list = True
 
 
-def generate_run_args(args: list, as_list: bool) -> list | str:
+def generate_run_args(in_args: list, as_list: bool) -> list | str:
     if as_list:
-        return args
+        return in_args
     ret_args = ''
-    for arg in args:
-        if type(arg) != str:
+    for arg in in_args:
+        if type(arg) is not str:
             ret_args += ' ' + str(arg)
         else:
             ret_args += ' ' + arg
@@ -67,7 +69,8 @@ if 'GITHUB_API_TOKEN' in os.environ:
     has_curl = subprocess.run(generate_run_args(['curl', '--version'], arg_as_list), shell=True)
     if has_curl.returncode != 0:
         print(
-            "Must have curl installed in order to upload releases. If you just want to build remove the GITHUB_API_TOKEN environment var")
+            "Must have curl installed in order to upload releases. If you just want to "
+            "build remove the GITHUB_API_TOKEN environment var")
         sys.exit(1)
 
 if github_token is None or len(github_token) == 0:
@@ -77,31 +80,32 @@ if github_token is None or len(github_token) == 0:
 
 
 def setup_v8_target_oss(arch, gn_args):
-    host_arch = platform.machine().lower()
+    # host_arch = platform.machine().lower()
 
-    if host_arch in ['amd64', 'x86_64']:
-        host_arch = 'x64'
-    elif host_arch in ['arm64']:
-        host_arch = 'arm64'
+    # if host_arch in ['amd64', 'x86_64']:
+    #    host_arch = 'x64'
+    # elif host_arch in ['arm64']:
+    #    host_arch = 'arm64'
 
     # quotes are important here
-    gn_args['target_cpu'] = f'"{host_arch}"'
     gn_args['v8_target_cpu'] = f'"{arch}"'
+    gn_args['target_cpu'] = f'"{arch}"'
 
     return gn_args
 
 
-def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_modules, obj_ext, platform_env=None):
+def core_build(arch, build, gn_args, build_v8_modules, package_v8_modules, package_lib,
+               platform_env=None):
     if platform_env is None:
         platform_env = {}
     build_name = f'{v8_version}_{build}'
     v8_root = build_root / Path('v8')
     rel_build_dir = Path('out.gn') / Path(build)
     build_dir = v8_root / Path('out.gn') / Path(build)
-    dist_dir = build_root / Path(f'dists/{build_name}')
+    core_dist_dir = build_root / Path(f'dists/{build_name}')
 
     os.makedirs(build_dir, exist_ok=True)
-    os.makedirs(dist_dir, exist_ok=True)
+    os.makedirs(core_dist_dir, exist_ok=True)
 
     dst_arg_file = build_dir / Path('args.gn')
     with open(dst_arg_file, 'w') as arg_file:
@@ -111,7 +115,13 @@ def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_m
     env = os.environ.copy()
     if env is not None:
         env.update(platform_env)
-    env['PATH'] = str(Path(f'{build_root}/depot_tools').resolve()) + ';' + os.environ['PATH']
+    if host_os == 'Windows':
+        seperator = ';'
+    else:
+        seperator = ':'
+
+    env['PATH'] = str(Path(f'{build_root}/depot_tools').resolve()) + seperator + os.environ['PATH']
+
 
     proc = subprocess.run(generate_run_args(['gn', 'gen', build_dir], arg_as_list), shell=True, env=env, cwd=v8_root)
     if proc.returncode != 0:
@@ -123,34 +133,39 @@ def core_build(build, arch, package_lib, gn_args, build_v8_modules, package_v8_m
         print('Failed to build v8 modules')
         return
 
-    # package the compiled v8 libs
     for lib_name, module_dirs in package_v8_modules.items():
         print(f'packaging library {lib_name}')
         if type(module_dirs) is str:
             module_dirs = [module_dirs]
+        if type(module_dirs) is dict:
+            temp_dirs = module_dirs['noarch']
+            if arch in module_dirs:
+                temp_dirs.extend(module_dirs[arch])
+            module_dirs = temp_dirs
         full_module_dir = []
         for module_dir in module_dirs:
-            full_module_dir.append(Path(module_dir) / Path(obj_ext))
+            full_module_dir.append(Path(module_dir))
 
-        if not package_lib(arch, (build_dir / Path('obj')), full_module_dir, (dist_dir / Path(f'{lib_name}'))):
+        if not package_lib(arch, build_dir, full_module_dir, (core_dist_dir / Path(f'{lib_name}'))):
             print(f"Failed to package {lib_name} library")
             return
 
-    shutil.copyfile((build_dir / Path(f'icudtl.dat')), (dist_dir / Path(f'icudtl.dat')))
-    shutil.copyfile((build_dir / Path(f'snapshot_blob.bin')), (dist_dir / Path(f'snapshot_blob.bin')))
+    shutil.copyfile((build_dir / Path(f'icudtl.dat')), (core_dist_dir / Path(f'icudtl.dat')))
+    shutil.copyfile((build_dir / Path(f'snapshot_blob.bin')), (core_dist_dir / Path(f'snapshot_blob.bin')))
 
     print(f'zipping up the libraries for {build_name}')
     with zipfile.ZipFile(build_root / Path('dists') / Path(f'{build_name}.zip'), 'w',
                          zipfile.ZIP_DEFLATED) as lib_zip_ref:
-        files = os.listdir(dist_dir)
+        files = os.listdir(core_dist_dir)
         for file in files:
             if file.startswith('.'):
                 continue
-            lib_zip_ref.write(dist_dir / Path(file), arcname=Path(dist_dir.name) / Path(file))
+            lib_zip_ref.write(core_dist_dir / Path(file), arcname=Path(core_dist_dir.name) / Path(file))
 
 
 def build_macos(host, arch):
-    from build_config.macos import gn_args_debug, gn_args_release, package_lib, package_v8_libs, build_v8_modules
+    from build_config.macos import gn_args_debug, gn_args_release, package_v8_libs, build_v8_modules, \
+        package_lib
     if host != 'Darwin':
         print('Skipping macos build as we are not on a MacOs host')
         return
@@ -159,14 +174,14 @@ def build_macos(host, arch):
         print('macos can only be built for arm64 or x64')
         return
 
-    core_build(f'macos-{arch}-release', arch, package_lib, setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
-               package_v8_libs, '*.o')
-    core_build(f'macos-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-               package_v8_libs, '*.o')
+    core_build(arch, f'macos-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
+               package_v8_libs, package_lib)
+    core_build(arch, f'macos-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+               package_v8_libs, package_lib)
 
 
 def build_ios(host, arch):
-    from build_config.ios import gn_args_debug, gn_args_release, package_lib, package_v8_libs, build_v8_modules
+    from build_config.ios import gn_args_debug, gn_args_release, package_v8_libs, build_v8_modules
     if host != 'Darwin':
         print('Skipping ios build as we are not on a MacOs host')
         return
@@ -175,14 +190,15 @@ def build_ios(host, arch):
         print('ios can only be built for arm64 or x64 simulator')
         return
 
-    core_build(f'ios-{arch}-release', arch, package_lib, setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
-               package_v8_libs, '*.o')
-    core_build(f'ios-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-               package_v8_libs, '*.o')
+    # core_build(f'ios-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
+    #           package_v8_libs)
+    # core_build(f'ios-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+    #           package_v8_libs)
 
 
 def build_windows(host, arch):
-    from build_config.windows import gn_args_debug, gn_args_release, package_lib, package_v8_libs, build_v8_modules
+    from build_config.windows import gn_args_debug, gn_args_release, package_v8_libs, build_v8_modules, \
+        package_lib
     if host != 'Windows':
         print('Skipping ios build as we are not on a Windows host')
         return
@@ -191,17 +207,19 @@ def build_windows(host, arch):
         'DEPOT_TOOLS_WIN_TOOLCHAIN': '0'
     }
 
-    core_build(f'win-{arch}-release', arch, package_lib, setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
-               package_v8_libs, '*.obj', env)
-    core_build(f'win-{arch}-debug', arch, package_lib, setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
-               package_v8_libs, '*.obj', env)
+    core_build(arch, f'win-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
+               package_v8_libs, package_lib, env)
+    core_build(arch, f'win-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+               package_v8_libs, package_lib, env)
 
 
+# noinspection PyUnusedLocal
 def build_android(host, arch):
     print('TODO')
     return
 
 
+# noinspection PyUnusedLocal
 def build_linux(host, arch):
     print('TODO')
     return
@@ -245,19 +263,24 @@ def make_github_call(url, method="GET", call_data=None):
 
 
 if args.macos:
-    build_macos(host_os, args.arch)
+    for arch in args.arch:
+        build_macos(host_os, arch)
 
 if args.ios:
-    build_ios(host_os, args.arch)
+    for arch in args.arch:
+        build_ios(host_os, arch)
 
 if args.windows:
-    build_windows(host_os, args.arch)
+    for arch in args.arch:
+        build_windows(host_os, arch)
 
 if args.android:
-    build_android(host_os, args.arch)
+    for arch in args.arch:
+        build_android(host_os, arch)
 
 if args.linux:
-    build_linux(host_os, args.arch)
+    for arch in args.arch:
+        build_linux(host_os, arch)
 
 # pack the include directory for the version
 print('zipping up the v8 includes directory')

@@ -9,7 +9,7 @@ gn_args_release = {
     'is_clang': 'false',
     'dcheck_always_on': 'false',
     'v8_static_library': 'true',
-    'v8_enable_pointer_compression_shared_cage ':'false',
+    'v8_enable_pointer_compression_shared_cage ': 'false',
 }
 
 gn_args_debug = {
@@ -23,7 +23,7 @@ gn_args_debug = {
     'v8_optimized_debug': 'false',
     'v8_static_library': 'true',
     'v8_enable_pointer_compression_shared_cage ': 'false',
-    'enable_iterator_debugging':'true'
+    'enable_iterator_debugging': 'true'
 }
 
 build_v8_modules = [
@@ -39,36 +39,159 @@ build_v8_modules = [
     'v8_snapshot',
     'v8_turboshaft',
     'cppgc_base',
-    'inspector'
+    'inspector',
 ]
 
+# We rename them to .a since bazel doesn't like the .lib extension
 package_v8_libs = {
-    'v8_compiler.a': 'v8_compiler',
-    'v8_base_without_compiler_0.a': 'v8_base_without_compiler_0',
-    'v8_base_without_compiler_1.a': 'v8_base_without_compiler_1',
-    'v8_libplatform.a': 'v8_libplatform',
-    'v8_libbase.a': 'v8_libbase',
-    'torque_generated_initializers.a': 'torque_generated_initializers',
-    'torque_generated_definitions.a': 'torque_generated_definitions',
-    'v8_bigint.a': 'v8_bigint',
-    'v8_heap_base.a': 'v8_heap_base',
-    'v8_snapshot.a': 'v8_snapshot',
-    'v8_turboshaft.a': 'v8_turboshaft',
-    'cppgc_base.a': 'cppgc_base',
-    'libcrdtp.a': 'third_party/inspector_protocol/crdtp',
-    'libcrdpt_platform.a': 'third_party/inspector_protocol/crdtp_platform',
-    'libzlib.a': [
-        'third_party/zlib/zlib',
-        'third_party/zlib/zlib_adler32_simd',
-        'third_party/zlib/zlib_crc32_simd',
-        'third_party/zlib/zlib_inflate_chunk_simd',
-        'third_party/zlib/google/compression_utils_portable',
+    "abseil.a": {
+        "noarch": [
+            "obj/third_party/abseil-cpp/absl/base/base/*.obj",
+            "obj/third_party/abseil-cpp/absl/base/log_severity/*.obj",
+            "obj/third_party/abseil-cpp/absl/base/malloc_internal/*.obj",
+            "obj/third_party/abseil-cpp/absl/base/raw_logging_internal/*.obj",
+            "obj/third_party/abseil-cpp/absl/base/spinlock_wait/*.obj",
+            "obj/third_party/abseil-cpp/absl/base/strerror/*.obj",
+            "obj/third_party/abseil-cpp/absl/base/throw_delegate/*.obj",
+            "obj/third_party/abseil-cpp/absl/container/hashtablez_sampler/*.obj",
+            "obj/third_party/abseil-cpp/absl/container/raw_hash_set/*.obj",
+            "obj/third_party/abseil-cpp/absl/crc/cpu_detect/*.obj",
+            "obj/third_party/abseil-cpp/absl/crc/crc32c/*.obj",
+            "obj/third_party/abseil-cpp/absl/crc/crc_cord_state/*.obj",
+            "obj/third_party/abseil-cpp/absl/crc/crc_internal/*.obj",
+            "obj/third_party/abseil-cpp/absl/debugging/debugging_internal/*.obj",
+            "obj/third_party/abseil-cpp/absl/debugging/demangle_internal/*.obj",
+            "obj/third_party/abseil-cpp/absl/debugging/examine_stack/*.obj",
+            "obj/third_party/abseil-cpp/absl/debugging/failure_signal_handler/*.obj",
+            "obj/third_party/abseil-cpp/absl/debugging/stacktrace/*.obj",
+            "obj/third_party/abseil-cpp/absl/debugging/symbolize/*.obj",
+            "obj/third_party/abseil-cpp/absl/hash/city/*.obj",
+            "obj/third_party/abseil-cpp/absl/hash/hash/*.obj",
+            "obj/third_party/abseil-cpp/absl/hash/low_level_hash/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/die_if_null/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/globals/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/internal/check_op/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/internal/conditions/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/internal/fnmatch/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/internal/format/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/internal/globals/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/internal/log_message/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/internal/log_sink_set/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/internal/nullguard/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/internal/proto/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/internal/vlog_config/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/log_entry/*.obj",
+            "obj/third_party/abseil-cpp/absl/log/log_sink/*.obj",
+            "obj/third_party/abseil-cpp/absl/numeric/int128/*.obj",
+            "obj/third_party/abseil-cpp/absl/profiling/exponential_biased/*.obj",
+            "obj/third_party/abseil-cpp/absl/random/distributions/*.obj",
+            "obj/third_party/abseil-cpp/absl/random/internal/platform/*.obj",
+            "obj/third_party/abseil-cpp/absl/random/internal/pool_urbg/*.obj",
+            "obj/third_party/abseil-cpp/absl/random/internal/randen/*.obj",
+            "obj/third_party/abseil-cpp/absl/random/internal/randen_hwaes/*.obj",
+            "obj/third_party/abseil-cpp/absl/random/internal/randen_hwaes_impl/*.obj",
+            "obj/third_party/abseil-cpp/absl/random/internal/randen_slow/*.obj",
+            "obj/third_party/abseil-cpp/absl/random/internal/seed_material/*.obj",
+            "obj/third_party/abseil-cpp/absl/random/seed_gen_exception/*.obj",
+            "obj/third_party/abseil-cpp/absl/random/seed_sequences/*.obj",
+            "obj/third_party/abseil-cpp/absl/status/status/*.obj",
+            "obj/third_party/abseil-cpp/absl/status/statusor/*.obj",
+            "obj/third_party/abseil-cpp/absl/strings/cord/*.obj",
+            "obj/third_party/abseil-cpp/absl/strings/cord_internal/*.obj",
+            "obj/third_party/abseil-cpp/absl/strings/cordz_functions/*.obj",
+            "obj/third_party/abseil-cpp/absl/strings/cordz_handle/*.obj",
+            "obj/third_party/abseil-cpp/absl/strings/cordz_info/*.obj",
+            "obj/third_party/abseil-cpp/absl/strings/internal/*.obj",
+            "obj/third_party/abseil-cpp/absl/strings/str_format_internal/*.obj",
+            "obj/third_party/abseil-cpp/absl/strings/string_view/*.obj",
+            "obj/third_party/abseil-cpp/absl/strings/strings/*.obj",
+            "obj/third_party/abseil-cpp/absl/synchronization/graphcycles_internal/*.obj",
+            "obj/third_party/abseil-cpp/absl/synchronization/kernel_timeout_internal/*.obj",
+            "obj/third_party/abseil-cpp/absl/synchronization/synchronization/*.obj",
+            "obj/third_party/abseil-cpp/absl/time/cctz/civil_time/*.obj",
+            "obj/third_party/abseil-cpp/absl/time/cctz/time_zone/*.obj",
+            "obj/third_party/abseil-cpp/absl/time/time/*.obj",
+            "obj/third_party/abseil-cpp/absl/types/bind_optional_access/*.obj",
+            "obj/third_party/abseil-cpp/absl/types/bad_variant_access/*.obj",
+        ],
+    },
+    'libchrome_zlib.a': {
+        'noarch':
+            [
+                'obj/third_party/zlib/google/compression_utils_portable/*.obj',
+                'obj/third_party/zlib/zlib/*.obj',
+                'obj/third_party/zlib/zlib_adler32_simd/*.obj',
+                'obj/third_party/zlib/zlib_inflate_chunk_simd/*.obj',
+            ],
+        'x64': [
+            'obj/third_party/zlib/zlib_crc32_simd/*.obj',
+        ],
+        'arm64':
+            [
+                'obj/third_party/zlib/zlib_arm_crc32/*.obj',
+            ]
+    },
+    'libcppgc_base.a': [
+        'obj/cppgc_base/*.obj'
     ],
-    'libicu.a': [
-        'third_party/icu/icui18n',
-        'third_party/icu/icuuc_private'
+    'libcrdtp_platform.a': [
+        'obj/third_party/inspector_protocol/crdtp_platform/*.obj'
     ],
-    'libcppgc_base.a': 'cppgc_base',
+    'libcrdtp.a': [
+        'obj/third_party/inspector_protocol/crdtp/*.obj'
+    ],
+    'libicui18n.a': [
+        'obj/third_party/icu/icui18n/*.obj'
+    ],
+    'libicuuc.a': [
+        'obj/third_party/icu/icuuc_private/*.obj'
+    ],
+    'libinspector.a': [
+        'obj/src/inspector/inspector/*.obj'
+    ],
+    'libinspector_string_conversions.a': [
+        'obj/src/inspector/inspector_string_conversions/*.obj'
+    ],
+    'libtorque_generated_definitions.a': [
+        'obj/torque_generated_definitions/*.obj'
+    ],
+    'libtorque_generated_initializers.a': [
+        'obj/torque_generated_initializers/*.obj'
+    ],
+    'libv8_base_without_compiler_0.a': [
+        'obj/v8_base_without_compiler_0/*.obj'
+    ],
+    'libv8_base_without_compiler_1.a': [
+        'obj/v8_base_without_compiler_1/*.obj'
+    ],
+
+    'libv8_bigint.a': [
+        'obj/v8_bigint/*.obj'
+    ],
+    'libv8_compiler.a': [
+        'obj/v8_compiler/*.obj'
+    ],
+    'libv8_heap_base.a': [
+        'obj/v8_heap_base/*.obj'
+    ],
+    'libv8_libinit.a': [
+        'obj/v8_init/*.obj'
+    ],
+    'libv8_libinitializers.a': [
+        'obj/v8_initializers/*.obj'
+    ],
+    'libv8_libbase.a': [
+        'obj/v8_libbase/*.obj'
+    ],
+    'libv8_libplatform.a': [
+        'obj/v8_libplatform/*.obj'
+    ],
+    'libv8_snapshot.a': [
+        'obj/v8_snapshot/*.obj'
+    ],
+    'libv8_turboshaft.a': [
+        'obj/v8_turboshaft/*.obj'
+    ],
 }
 
 vs_vc_path = None
