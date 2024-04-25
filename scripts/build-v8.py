@@ -115,12 +115,13 @@ def core_build(arch, build, gn_args, build_v8_modules, package_v8_modules, packa
     env = os.environ.copy()
     if env is not None:
         env.update(platform_env)
-    if host_os == 'Windowa':
+    if host_os == 'Windows':
         seperator = ';'
     else:
         seperator = ':'
 
     env['PATH'] = str(Path(f'{build_root}/depot_tools').resolve()) + seperator + os.environ['PATH']
+
 
     proc = subprocess.run(generate_run_args(['gn', 'gen', build_dir], arg_as_list), shell=True, env=env, cwd=v8_root)
     if proc.returncode != 0:
