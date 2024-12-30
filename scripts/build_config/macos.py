@@ -8,11 +8,7 @@ gn_args_release = {
     'v8_monolithic': 'false',
     'v8_use_external_startup_data': 'true',
     'dcheck_always_on': 'false',
-    'use_custom_libcxx': 'false',
-    'v8_static_library': 'true',
-    'v8_enable_pointer_compression_shared_cage ': 'false',
-    "v8_use_libm_trig_functions": "false",
-    "icu_disable_thin_archive": "true",
+    'use_custom_libcxx':'false',
 }
 
 gn_args_debug = {
@@ -24,11 +20,6 @@ gn_args_debug = {
     'v8_enable_slow_dchecks': 'true',
     'v8_optimized_debug': 'false',
     'use_custom_libcxx': 'false',
-    'v8_static_library': 'true',
-    'v8_enable_pointer_compression_shared_cage ': 'false',
-    'enable_iterator_debugging': 'true',
-    "v8_use_libm_trig_functions": "false",
-    "icu_disable_thin_archive": "true",
 }
 
 build_v8_modules = [
@@ -47,6 +38,18 @@ build_v8_modules = [
 ]
 
 package_v8_libs = {
+    'libcppgc_base.a': [
+        'obj/cppgc_base/*.o'
+    ],
+    'libm.a': [
+        'obj/libm/*.o'
+    ],
+    'libinspector.a': [
+        'obj/src/inspector/inspector/*.o'
+    ],
+    'libinspector_string_conversions.a': [
+        'obj/src/inspector/inspector_string_conversions/*.o'
+    ],
     "abseil.a": {
         "noarch": [
             "obj/third_party/abseil-cpp/absl/base/base/*.o",
@@ -134,9 +137,6 @@ package_v8_libs = {
                 'obj/third_party/zlib/zlib_arm_crc32/*.o',
             ]
     },
-    'libcppgc_base.a': [
-        'obj/cppgc_base/*.o'
-    ],
     'libcrdtp_platform.a': [
         'obj/third_party/inspector_protocol/crdtp_platform/*.o'
     ],
@@ -149,11 +149,9 @@ package_v8_libs = {
     'libicuuc.a': [
         'obj/third_party/icu/icuuc_private/*.o'
     ],
-    'libinspector_string_conversions.a': [
-        'obj/src/inspector/inspector_string_conversions/*.o'
-    ],
-    'libinspector.a': [
-        'obj/src/inspector/inspector/*.o'
+    # not sure if the next 3 are needed or just for the torque binary
+    'libtorque_base.a': [
+        'obj/torque_base/*.o'
     ],
     'libtorque_generated_definitions.a': [
         'obj/torque_generated_definitions/*.o'
@@ -173,6 +171,12 @@ package_v8_libs = {
     'libv8_heap_base.a': [
         'obj/v8_heap_base/*.o'
     ],
+    'libv8_init.a': [
+        'obj/v8_init/*.o'
+    ],
+    'libv8_initializers.a': [
+        'obj/v8_initializers/*.o'
+    ],
     'libv8_libbase.a': [
         'obj/v8_libbase/*.o'
     ],
@@ -181,9 +185,6 @@ package_v8_libs = {
     ],
     'libv8_snapshot.a': [
         'obj/v8_snapshot/*.o'
-    ],
-    'libv8_turboshaft.a': [
-        'obj/v8_turboshaft/*.o'
     ],
 }
 

@@ -122,16 +122,22 @@ if ret_code.returncode != 0:
     print('Failed to do initial gclient sync for v8')
     sys.exit(1)
 
-ret_code = subprocess.run(generate_run_args(['fetch', 'v8', ], arg_as_list),
-                          shell=True, cwd=top + '/v8', env=depot_env)
-if ret_code.returncode != 0:
-    print('Failed to fetch v8')
-    sys.exit(1)
+#ret_code = subprocess.run(generate_run_args(['fetch', 'v8', ], arg_as_list),
+#                          shell=True, cwd=top, env=depot_env)
+#if ret_code.returncode != 0:
+#    print('Failed to fetch v8')
+#    sys.exit(1)
 
 with open(top + '/v8Version', 'r') as f:
     v8_version = f.read()
 
-ret_code = subprocess.run(generate_run_args(['git', 'checkout', v8_version], arg_as_list),
+ret_code = subprocess.run(generate_run_args(['git', 'fetch'], arg_as_list),
+                          shell=True, cwd=top + '/v8', env=depot_env)
+if ret_code.returncode != 0:
+    print('Failed to fetch v8 updates')
+    sys.exit(1)
+
+ret_code = subprocess.run(generate_run_args(['git', 'checkout', "tags/"+v8_version], arg_as_list),
                           shell=True, cwd=top + '/v8', env=depot_env)
 if ret_code.returncode != 0:
     print('Failed to checkout v8 version: ' + v8_version)

@@ -20,6 +20,8 @@ platforms.add_argument('--ios', action='store_true', help='Specifies to build th
 platforms.add_argument('--windows', action='store_true', help='Specifies to build the windows version of the library')
 platforms.add_argument('--android', action='store_true', help='Specifies to build the android version of the library')
 platforms.add_argument('--linux', action='store_true', help='Specifies to build the linux version of the library')
+platforms.add_argument('--release-only', dest="release_only", action='store_true', help='Specifies to build only the release version of the library')
+platforms.add_argument('--debug-only', dest="debug_only", action='store_true', help='Specifies to build only the debug version of the library')
 
 parser.add_argument('--arch', choices=['x64', 'arm', 'arm32', 'arm64'], action="append",
                     default=[], help='Specifies to architecture to build for. '
@@ -174,9 +176,11 @@ def build_macos(host, arch):
         print('macos can only be built for arm64 or x64')
         return
 
-    core_build(arch, f'macos-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
+    if args.debug_only is False:
+        core_build(arch, f'macos-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
                package_v8_libs, package_lib)
-    core_build(arch, f'macos-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+    if args.release_only is False:
+        core_build(arch, f'macos-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
                package_v8_libs, package_lib)
 
 
@@ -190,9 +194,11 @@ def build_ios(host, arch):
         print('ios can only be built for arm64 or x64 simulator')
         return
 
-    # core_build(f'ios-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
+    # if args.debug_only is False:
+    #   core_build(f'ios-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
     #           package_v8_libs)
-    # core_build(f'ios-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+    # if args.release_only is False:
+    #   core_build(f'ios-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
     #           package_v8_libs)
 
 
@@ -207,9 +213,11 @@ def build_windows(host, arch):
         'DEPOT_TOOLS_WIN_TOOLCHAIN': '0'
     }
 
-    core_build(arch, f'win-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
+    if args.debug_only is False:
+        core_build(arch, f'win-{arch}-release', setup_v8_target_oss(arch, gn_args_release), build_v8_modules,
                package_v8_libs, package_lib, env)
-    core_build(arch, f'win-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
+    if args.release_only is False:
+        core_build(arch, f'win-{arch}-debug', setup_v8_target_oss(arch, gn_args_debug), build_v8_modules,
                package_v8_libs, package_lib, env)
 
 
